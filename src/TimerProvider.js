@@ -4,15 +4,9 @@ import { useState } from "react";
 export const TimerContext = React.createContext({});
 
 const TimerProvider = ({ children }) => {
-    const [timers, setTimers] = useState([]);
-
-    // const [timers, setTimers] = useState([],() => {
-    //     const hash = (window.location.hash ?? '').slice(1);
-    //     return decodeURIComponent(JSON.parse(hash))
-    // });
-    
+    const [timers, setTimers] = useState(window.location.hash ? JSON.parse(decodeURIComponent(window.location.hash).slice(1)):[]);
     const [isRunning, setIsRunning] = useState(null);
-    const [totalTime, setTotalTime] = useState(0);
+    const [totalTime, setTotalTime] = useState(localStorage.getItem("TotalTime") ? parseInt(localStorage.getItem("TotalTime")):0);
     const [isReset, setIsReset] = useState(null);
     const [isEditing, setIsEditing] = useState(null);
 
@@ -21,37 +15,51 @@ const TimerProvider = ({ children }) => {
     
     const totalTimeCalc = () => {
         let globalCount = 0
+
         for (let i = 0; i < timers.length; i++) {
-            if (timers[i].type === "XY") {
-                const totalMin = (timers[i].minutes * parseInt(timers[i].rounds))
-                const totalSec = (timers[i].seconds * parseInt(timers[i].rounds))
-                globalCount += (totalMin + totalSec)
-            }
+            if (timers[i].status !== "complete"){
+                if (timers[i].type === "XY") {
+                    const totalMin = (timers[i].minutes * parseInt(timers[i].rounds))
+                    const totalSec = (timers[i].seconds * parseInt(timers[i].rounds))
+                    globalCount += (totalMin + totalSec)
+                }
 
-            else if (timers[i].type === "Tabata") {
-                globalCount += timers[i].seconds
-            }
+                else if (timers[i].type === "Tabata") {
+                    globalCount += timers[i].seconds
+                }
 
-            else {
-                globalCount += (timers[i].minutes + timers[i].seconds)
+                else {
+                    globalCount += (timers[i].minutes + timers[i].seconds)
+                }
             }
         }
         setTotalTime(globalCount)
     }
-    
     
     const nextTimer = () => {
         if (activeTimerIndex === timers.length-1) {
             timers[activeTimerIndex].status = "complete"
             setTimers(timers)
             restart()
+
+            if (localStorage.getItem('history')) {
+                localStorage.setItem('history', localStorage.getItem('history')+JSON.stringify(timers));
+            }
+
+            else {
+                localStorage.setItem('history', JSON.stringify(timers));  
+            }
         }
         else {
             timers[activeTimerIndex].status = "complete"
             timers[activeTimerIndex+1].status = "running"
             setActiveTimerIndex(activeTimerIndex+1)
             setTimers(timers)
+            totalTimeCalc()
         }
+
+        // Update URL
+        window.location.hash = encodeURIComponent(JSON.stringify(timers))
     }
 
     // Restart timer
@@ -63,6 +71,9 @@ const TimerProvider = ({ children }) => {
         timers[0].status = "running"
         setTimers(timers)
         setTotalTime(0)
+
+        // Update URL
+        window.location.hash = encodeURIComponent(JSON.stringify(timers))
     }
 
     // Start or stop timer
@@ -79,6 +90,9 @@ const TimerProvider = ({ children }) => {
             setIsRunning(true)
             setIsReset(null)
         }
+
+        // Update URL
+        window.location.hash = encodeURIComponent(JSON.stringify(timers))
     }
 
     // Edit timer
@@ -115,6 +129,9 @@ const TimerProvider = ({ children }) => {
 
         setTotalTime(0)
         setActiveTimerIndex(0)
+
+        // Update URL
+        window.location.hash = encodeURIComponent(JSON.stringify(timers))
     }
 
     return (

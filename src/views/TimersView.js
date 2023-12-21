@@ -40,47 +40,22 @@ const TimersView = () => {
         nextTimer,
         isReset, 
         remove, 
-        setTotalTime, 
         totalTimeCalc, 
         edit,
         isEditing} = useContext(TimerContext)
 
-
-      useEffect(() => {
-        const hash = window.location.hash;
-        console.log('hash', hash)
-        if(!hash) return;
-
-        try {
-          const timerFromHash = JSON.parse(decodeURIComponent(hash).substring(1));
-        setTimers(timerFromHash)
-        } catch(err) {
-          console.log(err)
-        }
-      }, [])
-    
-    useEffect(() => {
-  
-      let intervalId;
-      
-      if (isRunning) {
-          intervalId = setTimeout(() => {setTotalTime(totalTime - 1)}, 8);
-      }
-  
-      else if (totalTime === 0 || isReset) {
-          totalTimeCalc()
-          return () => clearTimeout(intervalId);
-      }
-
-  }, [isRunning, totalTime, setTotalTime, totalTimeCalc, isReset]);
+  useEffect(() => {
+    if (totalTime === 0 || isReset) {
+      totalTimeCalc()
+    }
+  }, [totalTime, isReset, totalTimeCalc])  
+        
 
   // Minutes calculation
   const minutesCalc = Math.floor((totalTime % 360000) / 6000);
  
   // Seconds calculation
   const secondsCalc = Math.floor((totalTime % 6000) / 100);
-
-  // console.log(timers)
 
   const handleOnDragEnd = (result) => {
     const items = timers

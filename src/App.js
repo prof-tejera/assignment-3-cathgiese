@@ -6,6 +6,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import DocumentationView from "./views/DocumentationView";
 import TimersView from "./views/TimersView";
 import AddView from "./views/AddView";
+import HistoryView from "./views/HistoryView";
 
 const Container = styled.div`
   background: #f0f6fb;
@@ -39,6 +40,7 @@ const App = () => {
               <Route path="/docs" element={<DocumentationView />} />
               <Route path="/" element={<TimersView />} />
               <Route path="/add" element={<AddView />} />
+              <Route path="/history" element={<HistoryView />} />
             </Routes>
           </Router>
         </Container>

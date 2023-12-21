@@ -5,22 +5,20 @@ import { TimerContext } from '../../TimerProvider';
 import TimerForm from '../selectors/TimerForm';
 
 const Timer = ({minutes, seconds, status, rounds, type, description, work, rest, id}) => {
-    const {isRunning, nextTimer, isReset, isEditing} = useContext(TimerContext)
-     // Pull default value for time from localStorage
-    console.log('id', id, localStorage.getItem(id))
-    const [time, setTime] = useState(0);
-    const [roundsCount, setRoundsCount] = useState(rounds)
-    const [workStatus, setWorkStatus] = useState(true)
+    const {isRunning, nextTimer, isReset, isEditing, totalTime, setTotalTime} = useContext(TimerContext)
+    const [time, setTime] = useState(localStorage.getItem("Time") ? parseInt(localStorage.getItem("Time")):0);
+    const [roundsCount, setRoundsCount] = useState(localStorage.getItem("Rounds") ? parseInt(localStorage.getItem("Rounds")):1)
+    const [workStatus, setWorkStatus] = useState(localStorage.getItem("Work") ? localStorage.getItem("Work"):true)
+    
+    // Handle timers
     useEffect(() => {
-
-        // Handle timers
+        
         let intervalId
         
         // Stopwatch
         if (type === "Stopwatch") {
             if (isRunning && status === "running" && time >= 0) {
-                intervalId = setTimeout(() => {setTime(time + 1)}, 8);
-                // setTimeout(() => {pushToLocalStorage()}, 40);
+                intervalId = setTimeout(() => {setTime(time + 1);setTotalTime(totalTime-1)}, 8);
             }
          
             if (isRunning && time === (minutes+seconds) && status === "running") {
@@ -36,8 +34,7 @@ const Timer = ({minutes, seconds, status, rounds, type, description, work, rest,
         // Countdown
         if (type === "Countdown") {
             if (isRunning && status === "running" && time > 0) {
-                intervalId = setTimeout(() => {setTime(time - 1)}, 8);
-                // setTimeout(() => {pushToLocalStorage()}, 40);
+                intervalId = setTimeout(() => {setTime(time - 1);setTotalTime(totalTime-1)}, 8);
             }
          
             else if (isRunning && time === 0 && status === "running") {
@@ -53,14 +50,12 @@ const Timer = ({minutes, seconds, status, rounds, type, description, work, rest,
         if (type === "XY") {
             if (isRunning && status === "running" && time > 0) {
                 // setting time from 0 to 1 every 10 millisecond using javascript setInterval method
-                intervalId = setTimeout(() => setTime(time - 1), 8);
-                // setTimeout(() => {pushToLocalStorage()}, 40);
+                intervalId = setTimeout(() => {setTime(time - 1);setTotalTime(totalTime-1)}, 8);
                 }
             else if (isRunning && status === "running" && time === 0 && rounds >= 1) {
                 setTime(minutes+seconds)
                 setRoundsCount(roundsCount-1)
-                intervalId = setTimeout(() => setTime(time - 1), 8);
-                // setTimeout(() => {pushToLocalStorage()}, 40);
+                intervalId = setTimeout(() => {setTime(time - 1);setTotalTime(totalTime-1)}, 8);
             }
             if (roundsCount === 0){
                 nextTimer()
@@ -77,21 +72,19 @@ const Timer = ({minutes, seconds, status, rounds, type, description, work, rest,
         if (type === "Tabata") {
             if (isRunning && status === "running" && time !==0 && roundsCount > 0) {
                 // setting time from 0 to 1 every 10 millisecond using javascript setInterval method
-                intervalId = setTimeout(() => setTime(time - 1), 8);
-                // setTimeout(() => {pushToLocalStorage()}, 40);
+                intervalId = setTimeout(() => {setTime(time - 1);setTotalTime(totalTime-1)}, 8);
                 }
     
             if (isRunning && status === "running" && workStatus && time === 0 && roundsCount > 0) {
                 setTime(rest)
                 setWorkStatus(null)
-                intervalId = setTimeout(() => setTime(time - 1), 8);
+                intervalId = setTimeout(() => {setTime(time - 1);setTotalTime(totalTime-1)}, 8);
             }
     
             if (isRunning && status === "running" && workStatus === null && time === 0 && roundsCount > 0) {
                 setTime(work)
                 setWorkStatus(true)
                 setRoundsCount(roundsCount-1) 
-                // setTimeout(() => {pushToLocalStorage()}, 40);
             }
             
             else if(roundsCount === 0){
@@ -107,6 +100,7 @@ const Timer = ({minutes, seconds, status, rounds, type, description, work, rest,
                 setWorkStatus(true)
             }
         }
+
         return () => clearTimeout(intervalId);
 
     }, [isRunning,
@@ -121,29 +115,30 @@ const Timer = ({minutes, seconds, status, rounds, type, description, work, rest,
         isReset,  
         rest, 
         work, 
-        workStatus])
+        workStatus,
+        totalTime,
+        setTotalTime])
 
      // Minutes calculation
      const minutesCalc = Math.floor((time % 360000) / 6000);
  
      // Seconds calculation
      const secondsCalc = Math.floor((time % 6000) / 100);
-     const secondsCalcRef = React.useRef( Math.floor((time % 6000) / 100));
 
-     useEffect(() => {
-        //console.log('secondsCalcRef.current', secondsCalcRef.current)
-        secondsCalcRef.current = Math.floor((time % 6000) / 100)
-     }, [time])
+    useEffect(( ) => {
+        
+        if (isRunning) {
+            localStorage.setItem('Time', time);
+            localStorage.setItem('Rounds', roundsCount);
+            localStorage.setItem('TotalTime', totalTime)
+            if (type === 'Tabata'){
+                localStorage.setItem('Work', workStatus)
+            }
+        }
 
-     useEffect(( ) => {
-        // Store timer into locastorage
-        localStorage.setItem(id, time);
-     }, [secondsCalcRef?.current])
+        
+     }, [isRunning, secondsCalc, roundsCount, time, workStatus, totalTime, type])
 
-     useEffect(( ) => {
-        // Store timer into locastorage
-        localStorage.setItem('Rounds count', roundsCount);
-     }, [roundsCount])
 
      return (
         <div className="grid-container">
