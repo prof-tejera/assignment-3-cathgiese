@@ -12,7 +12,7 @@
     "react-scripts": "^3.0.1",
     "styled-components": "^5.3.1"
   },
-  "homepage": "https://prof-tejera.github.io/assignment-2-cathgiese",
+  "homepage": "https://prof-tejera.github.io/assignment-3-cathgiese",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
