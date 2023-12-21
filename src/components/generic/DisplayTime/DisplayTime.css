@@ -16,3 +16,7 @@
   .Complete {
     background-color: #85858392;
   }
+
+  .hidden {
+    display: none;
+  }

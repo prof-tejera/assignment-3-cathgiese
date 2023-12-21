@@ -1,22 +1,20 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import styled from "styled-components";
 import { TimerContext } from "../TimerProvider";
 import { Link } from "react-router-dom";
 
 import Button from "../components/generic/Button/Button";
-import Stopwatch from "../components/timers/Stopwatch";
-import Countdown from "../components/timers/Countdown";
-import XY from "../components/timers/XY";
-import Tabata from "../components/timers/Tabata";
+import Timer from "../components/timers/Timer";
 
 const Timers = styled.div`
   display: grid;
   align-items: center;
-  grid-template-columns: auto auto;
+  grid-template-columns: auto;
   justify-content: center;
 `;
 
-const Timer = styled.div`
+const TimerDiv = styled.div`
   border: 1px solid gray;
   padding: 20px;
   margin: 10px;
@@ -32,10 +30,49 @@ const ControlButtons = styled.div`
   font-size: 1.5rem;
 `;
 
-const TimerTitle = styled.div``;
-
 const TimersView = () => { 
-  const {timers, totalTime, isRunning, restart, startStop, nextTimer, isReset, remove} = useContext(TimerContext)
+  const {timers, 
+        setTimers,
+        totalTime,
+        isRunning,
+        restart,
+        startStop,
+        nextTimer,
+        isReset, 
+        remove, 
+        setTotalTime, 
+        totalTimeCalc, 
+        edit,
+        isEditing} = useContext(TimerContext)
+
+
+      useEffect(() => {
+        const hash = window.location.hash;
+        console.log('hash', hash)
+        if(!hash) return;
+
+        try {
+          const timerFromHash = JSON.parse(decodeURIComponent(hash).substring(1));
+        setTimers(timerFromHash)
+        } catch(err) {
+          console.log(err)
+        }
+      }, [])
+    
+    useEffect(() => {
+  
+      let intervalId;
+      
+      if (isRunning) {
+          intervalId = setTimeout(() => {setTotalTime(totalTime - 1)}, 8);
+      }
+  
+      else if (totalTime === 0 || isReset) {
+          totalTimeCalc()
+          return () => clearTimeout(intervalId);
+      }
+
+  }, [isRunning, totalTime, setTotalTime, totalTimeCalc, isReset]);
 
   // Minutes calculation
   const minutesCalc = Math.floor((totalTime % 360000) / 6000);
@@ -43,13 +80,23 @@ const TimersView = () => {
   // Seconds calculation
   const secondsCalc = Math.floor((totalTime % 6000) / 100);
 
-  // const handleRemoval = (id) => {
-  //   setTimers(timers.filter(timer => timer.id !== id))
-  // }
+  // console.log(timers)
 
+  const handleOnDragEnd = (result) => {
+    const items = timers
+    const [reorderedItem] = items.splice(result.source.index, 1)
+    items.splice(result.destination.index, 0, reorderedItem)
+    setTimers(items)
+    restart()
+  }
+  
   return (
     <ControlButtons>
       <Link to="/add"><Button text="+ Add timer" color={"Default-button Button-add"} /></Link><br></br>
+      <Button 
+        text={"Save workout"}
+        color={"Default-button Button-add"}
+        onClick={e => {window.location.hash = encodeURIComponent(JSON.stringify(timers))}} />
       <Button 
         text={isRunning ? "Pause workout" : "Start workout"}
         onClick={timers.length === 0 ? null : startStop}
@@ -63,44 +110,42 @@ const TimersView = () => {
         color={"Default-button"}
         onClick={timers.length === 0 ? null : restart} />
     <h2>Total time: {minutesCalc}m{secondsCalc}s</h2>
-    <Timers>
-      {timers.map((timer) => (
-        <Timer key={`timer-${timer.id}`}>
-          <TimerTitle>{timer.title}</TimerTitle>
-          {timer.type === "stopwatch" && <Stopwatch 
-                                          id={timer.id}
-                                          minutes={timer.minutes} 
-                                          seconds={timer.seconds}
-                                          status={timer.status} 
-                                          isReset={isReset}/>}
-          {timer.type === "countdown" && <Countdown 
-                                          id={timer.id}
-                                          minutes={timer.minutes} 
-                                          seconds={timer.seconds}
-                                          status={timer.status}
-                                          isReset={isReset}/>}
-          {timer.type === "xy" && <XY 
-                                    id={timer.id}
-                                    minutes={timer.minutes} 
-                                    seconds={timer.seconds}
-                                    rounds={timer.rounds}
-                                    status={timer.status}
-                                    isReset={isReset}/>}
-
-          {timer.type === "tabata" && <Tabata 
-                                        id={timer.id}
-                                        work={timer.work} 
-                                        rest={timer.rest}
-                                        rounds={timer.rounds}
-                                        status={timer.status}
-                                        isReset={isReset}/>}
-          <Button 
-              text={"Remove"}
-              color={"Default-button Button-danger"}
-              onClick={() => remove({id:timer.id})}/>
-        </Timer>
-      ))}
-    </Timers>
+    <DragDropContext onDragEnd={handleOnDragEnd}>
+      <Droppable droppableId="timers">
+        {(provided) => (
+          <Timers {...provided.droppableProps} ref={provided.innerRef}>
+            {timers.map((timer, index) => (
+              <Draggable key={`drag-${timer.id}`} draggableId={`drag-${timer.id}`} index={index}>
+                {(provided) => (
+                  <TimerDiv key={`timer-${timer.id}`} {...provided.dragHandleProps} {...provided.draggableProps} ref={provided.innerRef}>
+                    <Timer
+                        id={timer.id}
+                        type={timer.type}
+                        description={timer.description}
+                        rounds={timer.rounds}
+                        minutes={timer.minutes} 
+                        seconds={timer.seconds}
+                        status={timer.status} 
+                        isReset={isReset}
+                        work={timer.work} 
+                        rest={timer.rest}/>
+                    <Button 
+                        text={"Edit"}
+                        color={isEditing || isRunning ? "hidden": "Default-button"}
+                        onClick={() => edit({id:timer.id})}/>
+                    <Button 
+                        text={"Remove"}
+                        color={isEditing || isRunning ? "hidden":"Default-button Button-danger"}
+                        onClick={() => remove({id:timer.id})}/>
+                  </TimerDiv>
+                 )}
+              </Draggable>
+            ))}
+            {provided.placeholder}
+          </Timers>
+        )}
+      </Droppable>
+    </DragDropContext>
     </ControlButtons>
   );
 };

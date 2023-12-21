@@ -1,7 +1,7 @@
 import React from 'react'
 import "./Selector.css";
 
-const Selector = ({ label, numbers, ...selectProps }) => {
+const Selector = ({ label, items, ...selectProps }) => {
 
   return (
     <label>
@@ -9,7 +9,7 @@ const Selector = ({ label, numbers, ...selectProps }) => {
         className="default"
         name="selectedTime"
         {...selectProps}>
-        {numbers}
+        {items}
       </select>
       {label}
     </label>

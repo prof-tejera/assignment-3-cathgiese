@@ -2,7 +2,7 @@
     border: none;
     color: black;
     padding: 10px;
-    width: 45px;
+    width: fit-content;
     text-align: center;
     text-decoration: none;
     display: relative;

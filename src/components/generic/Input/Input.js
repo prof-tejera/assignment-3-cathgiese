@@ -1,17 +1,14 @@
+import React from "react";
 import "./Input.css";
 
-const Input = ({ placeholder, inputName, inputValue }) => {
+const Input = ({ inputName, inputValue, ...inputProps }) => {
   return (
     <input 
       className="Default-input"
-      placeholder={placeholder}
-      type="tel"
-      max="59"
-      min="1"
-      maxLength="2"
-      name={inputName}
-      value={inputValue}
-      pattern="\d*"
+      placeholder="Description (optional)"
+      // name={inputName}
+      // value={inputValue}
+      {...inputProps}
     />
   );
 };

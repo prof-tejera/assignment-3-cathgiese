@@ -5,20 +5,40 @@ export const TimerContext = React.createContext({});
 
 const TimerProvider = ({ children }) => {
     const [timers, setTimers] = useState([]);
+
+    // const [timers, setTimers] = useState([],() => {
+    //     const hash = (window.location.hash ?? '').slice(1);
+    //     return decodeURIComponent(JSON.parse(hash))
+    // });
+    
     const [isRunning, setIsRunning] = useState(null);
     const [totalTime, setTotalTime] = useState(0);
     const [isReset, setIsReset] = useState(null);
+    const [isEditing, setIsEditing] = useState(null);
 
     // Current running timer
     const [activeTimerIndex, setActiveTimerIndex] = useState(0); 
     
     const totalTimeCalc = () => {
-        const totalMin = timers.map((timer) => timer.minutes)
-        totalMin.forEach((val) => setTotalTime(totalTime+val))
+        let globalCount = 0
+        for (let i = 0; i < timers.length; i++) {
+            if (timers[i].type === "XY") {
+                const totalMin = (timers[i].minutes * parseInt(timers[i].rounds))
+                const totalSec = (timers[i].seconds * parseInt(timers[i].rounds))
+                globalCount += (totalMin + totalSec)
+            }
 
-        const totalSec = timers.map((timer) => timer.seconds)
-        totalSec.forEach((val) => setTotalTime(totalTime+val))
+            else if (timers[i].type === "Tabata") {
+                globalCount += timers[i].seconds
+            }
+
+            else {
+                globalCount += (timers[i].minutes + timers[i].seconds)
+            }
+        }
+        setTotalTime(globalCount)
     }
+    
     
     const nextTimer = () => {
         if (activeTimerIndex === timers.length-1) {
@@ -42,16 +62,28 @@ const TimerProvider = ({ children }) => {
         timers.map((timer) => timer.status = "ready")
         timers[0].status = "running"
         setTimers(timers)
+        setTotalTime(0)
     }
 
     // Start or stop timer
     const startStop = () => {
         if (isRunning) {
             setIsRunning(null)
-        } else {
+        } 
+        else if (totalTime === 0){
+            totalTimeCalc()
             setIsRunning(true)
             setIsReset(null)
         }
+        else {
+            setIsRunning(true)
+            setIsReset(null)
+        }
+    }
+
+    // Edit timer
+    const edit = ({id}) => {
+        setIsEditing(id)
     }
 
     // Delete from queue
@@ -70,13 +102,6 @@ const TimerProvider = ({ children }) => {
                 const newTimers = timers.slice(1)
                 newTimers[0].status = "running"
                 setTimers(newTimers)
-
-                // recalculate total time
-                const minusMin = timers.map((timer) => timer.minutes)
-                minusMin.forEach((val) => setTotalTime(totalTime-val))
-
-                const minusSec = timers.map((timer) => timer.seconds)
-                minusSec.forEach((val) => setTotalTime(totalTime-val))
             }
     
             else {
@@ -85,16 +110,10 @@ const TimerProvider = ({ children }) => {
                  ...timers.slice(0, i),
                  ...timers.slice(i + 1),
                ])
-
-               // recalculate total time
-               const minusMin = timers.map((timer) => timer.minutes)
-               minusMin.forEach((val) => setTotalTime(totalTime-val))
-
-               const minusSec = timers.map((timer) => timer.seconds)
-               minusSec.forEach((val) => setTotalTime(totalTime-val))
             }
         }
 
+        setTotalTime(0)
         setActiveTimerIndex(0)
     }
 
@@ -115,7 +134,10 @@ const TimerProvider = ({ children }) => {
                 startStop,
                 isReset,
                 setIsReset,
-                remove
+                remove,
+                edit,
+                isEditing,
+                setIsEditing,
             }}
         >{children}</TimerContext.Provider>
     )
