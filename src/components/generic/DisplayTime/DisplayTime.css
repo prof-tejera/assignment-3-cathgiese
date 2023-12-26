@@ -1,0 +1,22 @@
+.Default-display {
+    border: 1px solid black;
+    width: 300px;
+    height: 70px;
+    text-align: center;
+    margin-bottom: 10px;
+    background-color: white;
+    font-size: 50px;
+    padding: 30px
+  }
+  
+  .Running {
+    background-color: #AEBE92;
+  }
+
+  .Complete {
+    background-color: #85858392;
+  }
+
+  .hidden {
+    display: none;
+  }
